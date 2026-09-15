@@ -1,0 +1,7 @@
+# Install a suitable PyTorch build separately; GPU runs used torch 2.7.1.
+transformers==4.55.0
+scikit-learn==1.7.2
+numpy>=1.26,<3
+scipy>=1.11,<2
+accelerate>=0.26,<2
+safetensors>=0.4.3,<1
