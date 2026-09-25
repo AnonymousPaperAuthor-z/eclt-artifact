@@ -89,6 +89,28 @@ def relation_features(
     return out
 
 
+def raw_relation_features(
+    row: dict[str, Any], requested: int, *, adjacent_differences: bool = False
+) -> dict[str, float]:
+    """Keep fixed depth coordinates, optionally adding adjacent changes."""
+    layers = ordered_layers(row, requested)
+    out: dict[str, float] = {}
+    series: dict[str, list[tuple[int, float]]] = {key: [] for key in RELATION_KEYS}
+    for position, layer in enumerate(layers):
+        for key in RELATION_KEYS:
+            value = finite(layer.get(key))
+            if value is None:
+                continue
+            out[f"P{position}.{key}"] = value
+            series[key].append((position, value))
+    if adjacent_differences:
+        for key, values in series.items():
+            for (left_position, left), (right_position, right) in zip(values, values[1:]):
+                if right_position == left_position + 1:
+                    out[f"D{left_position}.{key}"] = right - left
+    return out
+
+
 def confidence_features(row: dict[str, Any]) -> dict[str, float]:
     out: dict[str, float] = {}
     for key, value in ((row.get("features") or {}).get("confidence") or {}).items():
@@ -108,6 +130,8 @@ FEATURES: dict[str, FeatureFn] = {
     "ordered_3": lambda row: relation_features(row, 3),
     "ordered_5": lambda row: relation_features(row, 5),
     "ordered_9": lambda row: relation_features(row, 9),
+    "raw_9": lambda row: raw_relation_features(row, 9),
+    "raw_diff_9": lambda row: raw_relation_features(row, 9, adjacent_differences=True),
     "orderless_9": lambda row: relation_features(row, 9, orderless=True),
     "shuffled_9": lambda row: relation_features(row, 9, shuffled=True),
     "full_eclt": full_features,
@@ -173,6 +197,9 @@ def evaluate_model(path: Path, bootstrap: int) -> dict[str, Any]:
             ),
             "ordered_9_minus_ordered_3": base.grouped_bootstrap_delta(
                 y, values["ordered_3"], values["ordered_9"], group_values, bootstrap
+            ),
+            "raw_diff_9_minus_raw_9": base.grouped_bootstrap_delta(
+                y, values["raw_9"], values["raw_diff_9"], group_values, bootstrap
             ),
         }
 

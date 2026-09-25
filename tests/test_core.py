@@ -9,6 +9,7 @@ import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 import eclt_features as core
+import evaluate_depth as depth
 import evaluate_pairs as pairs
 import extract_features as extract
 
@@ -55,6 +56,17 @@ class CoreTests(unittest.TestCase):
         self.assertTrue(values)
         self.assertFalse(any("norm" in key or "confidence" in key for key in values))
         self.assertNotIn("span_present", values)
+
+    def test_adjacent_depth_features(self):
+        row = feature_row(1)
+        raw = depth.raw_relation_features(row, 3)
+        with_diff = depth.raw_relation_features(row, 3, adjacent_differences=True)
+        self.assertTrue(raw.items() <= with_diff.items())
+        self.assertFalse(any(key.startswith("D") for key in raw))
+        self.assertAlmostEqual(
+            with_diff["D0.predictor_context_cos"],
+            with_diff["P1.predictor_context_cos"] - with_diff["P0.predictor_context_cos"],
+        )
 
     def test_grouped_probe(self):
         rows = [feature_row(i) for i in range(30)]

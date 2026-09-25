@@ -103,6 +103,12 @@ python scripts/evaluate_depth.py \
   --output-md outputs/depth_scores.md --bootstrap 2000
 ```
 
+The depth evaluator also reports `raw_9`, which keeps the nine relation values
+at fixed depth coordinates without summary statistics, and `raw_diff_9`, which
+adds differences between adjacent sampled depths. Their grouped-bootstrap
+comparison tests whether local trajectory changes add information beyond depth
+identity alone.
+
 SciFact uses document-grouped five-fold evaluation and a document-disjoint
 train-to-dev comparison. VitaminC uses the selected official train/test split;
 its additional pooled OOF output is a separate diagnostic. Paired direction
